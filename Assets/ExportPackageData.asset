@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d546ee899a6743bb980947122c6b10ae, type: 3}
   m_Name: ExportPackageData
   m_EditorClassIdentifier: 
-  packages: []
+  packages:
+  - Gemserk.Rts.Fog
