@@ -1,6 +1,5 @@
 ﻿using Gemserk.Vision;
 using UnityEngine;
-using UnityEngine.PostProcessing;
 using UnityEngine.UI;
 
 public class DebugScript : MonoBehaviour

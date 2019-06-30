@@ -1,8 +1,6 @@
 ﻿using System.Collections;
-using Gemserk;
 using Gemserk.Vision;
 using UnityEngine;
-using UnityEngine.PostProcessing;
 
 public class PerformanceSceneController : MonoBehaviour
 {
@@ -26,8 +24,8 @@ public class PerformanceSceneController : MonoBehaviour
 		0, 1, 2, 4, 8, 3, 7, 15
 	};
 	
-	[SerializeField]
-	protected PostProcessingBehaviour _postProcessing;
+	// [SerializeField]
+	// protected PostProcessingBehaviour _postProcessing;
 
 	[SerializeField]
 	protected VisionTerrainTexture _visionTerrain;
@@ -132,16 +130,16 @@ public class PerformanceSceneController : MonoBehaviour
 				b.UpdateText(string.Format("raycast: {0}", _visionSystem.raycastEnabled ? "on" : "off"));
 			}
 			
-			if (_postProcessing != null)
-			{
-				var b = debugPanelScript.AddButton("blur", button =>
-				{
-					_postProcessing.enabled = !_postProcessing.enabled;
-					button.UpdateText(string.Format("blur: {0}", _postProcessing.enabled ? "on" : "off"));
-				}, null);
-				
-				b.UpdateText(string.Format("blur: {0}", _postProcessing.enabled ? "on" : "off"));
-			}
+//			if (_postProcessing != null)
+//			{
+//				var b = debugPanelScript.AddButton("blur", button =>
+//				{
+//					_postProcessing.enabled = !_postProcessing.enabled;
+//					button.UpdateText(string.Format("blur: {0}", _postProcessing.enabled ? "on" : "off"));
+//				}, null);
+//				
+//				b.UpdateText(string.Format("blur: {0}", _postProcessing.enabled ? "on" : "off"));
+//			}
 
 			if (_visionSystem != null)
 			{
