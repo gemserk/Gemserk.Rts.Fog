@@ -8,12 +8,12 @@ namespace Gemserk.Vision
         public int height;
 
         public int[] values;
-        public short[] ground;
+//        public short[] ground;
         private int[] visited;
 
         public int[] temporaryVisible;
 		
-        public void Init(int width, int height, int value, short groundLevel)
+        public void Init(int width, int height, int value)
         {
             this.width = width;
             this.height = height;
@@ -21,12 +21,12 @@ namespace Gemserk.Vision
             var length = width * height;
 			
             values = new int[length];
-            ground = new short[length];
+//            ground = new short[length];
             visited = new int[length];
 
             temporaryVisible = new int[length];
 			
-            Clear(value, groundLevel);
+            Clear(value);
         }
 
         public bool IsInside(int i, int j)
@@ -60,27 +60,26 @@ namespace Gemserk.Vision
             return (visited[i] & playerFlags) > 0;
         }
 
-        public short GetGround(int i, int j)
-        {
-            return ground[i + j * width];
-        }
-		
-        public short GetGround(int i)
-        {
-            return ground[i];
-        }
-		
-        public void SetGround(int i, int j, short ground)
-        {
-            this.ground[i + j * width] = ground;
-        }
+//        public short GetGround(int i, int j)
+//        {
+//            return ground[i + j * width];
+//        }
+//		
+//        public short GetGround(int i)
+//        {
+//            return ground[i];
+//        }
+//		
+//        public void SetGround(int i, int j, short ground)
+//        {
+//            this.ground[i + j * width] = ground;
+//        }
 
-        public void Clear(int value, short groundLevel)
+        public void Clear(int value)
         {
             for (var i = 0; i < width * height; i++)
             {
                 visited[i] = 0;
-                ground[i] = groundLevel;
                 values[i] = value;
             }
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using Gemserk.DataGrids;
 using UnityEngine;
 
 namespace Gemserk.Vision
@@ -40,28 +41,17 @@ namespace Gemserk.Vision
             _texture.Apply();
         }
 
-        private VisionMatrix _visionMatrix;
-        private bool _dirty = true;
-
-        public void UpdateTexture(VisionMatrix visionMatrix)
+        public void UpdateTexture(GridData data)
         {
-            _visionMatrix = visionMatrix;
-            _dirty = true;
-        }
-
-        private void Update()
-        {
-            if (!_dirty || _visionMatrix.values == null)
+            if (data.values == null)
                 return;
 
-            _dirty = false;
-
-            var width = _visionMatrix.width;
-            var height = _visionMatrix.height;
+            var width = data.width;
+            var height = data.height;
         
             for (var i = 0; i < width * height; i++)
             {
-                var ground = _visionMatrix.GetGround(i);
+                var ground = data.ReadValue(i);
                 var terrainColor = Color.black;
                 if (ground < _terrainColors.Length)
                     terrainColor = _terrainColors[ground];

@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Gemserk.DataGrids
 {
@@ -39,6 +40,7 @@ namespace Gemserk.DataGrids
             values[i + j * width] = value;
         }
 
+//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadValue(int i, int j)
         {
             return values[i + j * width];
@@ -60,15 +62,17 @@ namespace Gemserk.DataGrids
             return (values[i] & value) > 0;
         }
 
-        public void ClearValues()
-        {
-            Array.Clear(values, 0, values.Length);
-        }
-
         public void Clear()
         {
             Array.Clear(values, 0, values.Length);
         }
 
+        public void Clear(int value)
+        {
+            for (var i = 0; i < width * height; i++)
+            {
+                values[i] = value;
+            }
+        }
     }
 }

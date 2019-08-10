@@ -1,4 +1,5 @@
 ﻿using System;
+using Gemserk.DataGrids;
 using Gemserk.Vision;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ public class DrawingSceneController : MonoBehaviour
 	
 	private Vector2 _localScale;
 
-	private VisionMatrix _visionMatrix;
+	private GridData _gridData;
 	
 	// Use this for initialization
 	private void Start () {
@@ -29,15 +30,16 @@ public class DrawingSceneController : MonoBehaviour
 		
 //		_visionMatrix = new VisionSystem.VisionMatrix[_width * _height];
 		
-		_visionMatrix.Init(_width, _height, 0, 0);
+		_gridData = new GridData(_width, _height, 0);
 	}
 
 	// TODO: create struct/class for vision matrix with width/height in it.
-	private static void DrawPixel(VisionMatrix visionMatrix, int x, int y, int value)
+	private static void DrawPixel(GridData gridData, int x, int y, int value)
 	{
-		if (visionMatrix.IsInside(x, y))
+		if (gridData.IsInside(x, y))
 		{
-			visionMatrix.SetVisible(1, x, y);
+			gridData.StoreFlagValue(1, x, y);
+//			visionMatrix.SetVisible(1, x, y);
 		}
 	}
 	
@@ -55,17 +57,17 @@ public class DrawingSceneController : MonoBehaviour
 			{
 				var i0 = i + (y0 + y) * _width;
 				var i1 = i + (y0 - y) * _width;
-
-				DrawPixel(_visionMatrix, i, y0 + y, 2);
-				DrawPixel(_visionMatrix, i, y0 - y, 2);
+				
+				DrawPixel(_gridData, i, y0 + y, 2);
+				DrawPixel(_gridData, i, y0 - y, 2);
 			}
 			for (int i = x0 - y; i <= x0 + y; i++)
 			{
 				var i0 = i + (y0 + x) * _width;
 				var i1 = i + (y0 - x) * _width;
 
-				DrawPixel(_visionMatrix, i, y0 + x, 2);
-				DrawPixel(_visionMatrix, i, y0 - x, 2);
+				DrawPixel(_gridData, i, y0 + x, 2);
+				DrawPixel(_gridData, i, y0 - x, 2);
 			}
 
 			y++;
@@ -100,7 +102,7 @@ public class DrawingSceneController : MonoBehaviour
 
 	private void ClearMatrix()
 	{
-		_visionMatrix.Clear(0, 0);
+		_gridData.Clear(0);
 	}
 	
 	private void Update()
@@ -120,7 +122,7 @@ public class DrawingSceneController : MonoBehaviour
 			ClearMatrix();
 		}
 		
-		_visionTexture.UpdateTexture(_visionMatrix, 1);
+		_visionTexture.UpdateTexture(_gridData, _gridData, 1);
 	}
 	
 }

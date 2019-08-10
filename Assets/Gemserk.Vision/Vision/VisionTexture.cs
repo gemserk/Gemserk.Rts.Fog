@@ -1,4 +1,5 @@
 ﻿using System;
+using Gemserk.DataGrids;
 using UnityEngine;
 
 namespace Gemserk.Vision
@@ -33,9 +34,6 @@ namespace Gemserk.Vision
         [SerializeField]
         protected bool _previousVision = true;
 
-        [SerializeField]
-        private Sprite _backgroundSprite;
-
         public bool PreviousVision
         {
             get { return _previousVision; }
@@ -68,60 +66,25 @@ namespace Gemserk.Vision
             _texture.Apply();
         }
 
-        private VisionMatrix _visionMatrix;
-        private bool _dirty = true;
-
-        private int _activePlayers;
-    
-        public void UpdateTexture(VisionMatrix visionMatrix, int activePlayers)
+        public void UpdateTexture(GridData visionData, GridData previousVisionData, int activePlayer)
         {
-            _visionMatrix = visionMatrix;
-            _activePlayers = activePlayers;
-            _dirty = true;
-        }
-        
-//        [SerializeField]
-//        private Vector2 _tilesBlocked = new Vector2(5, 5);
-        
-//        [SerializeField]
-//        private Vector2 _tileSize = new Vector2(16, 16);
-
-        private void Update()
-        {
-            if (!_dirty || _visionMatrix.values == null)
-                return;
-        
-            _dirty = false;
-        
             var interpolationEnabled = _interpolateColorSpeed > Mathf.Epsilon;
             var alpha = Time.deltaTime * _interpolateColorSpeed;
         
-            var width = _visionMatrix.width;
-            var height = _visionMatrix.height;
-            
-            // TODO: use bg size too, it should be something like from 0 to bgstart.x + 5
-           //  var bgSize = _backgroundSprite.rect.size / tileSize;
-            
-           //  Debug.Log(bgSize);
-            
-            // var diff = new Vector2(width, height) - bgSize;
+            var width = visionData.width;
+            var height = visionData.height;
 
-            // var noise = 0;
-            
             for (var i = 0; i < width * height; i++)
             {
-                // get coordinates...
-                var x = i % width;
-                var y = Mathf.FloorToInt(i / width);
-                
                 var newColor = _startColor;
-                
-                var isVisible = _visionMatrix.IsVisible(_activePlayers, i);
-    
+
+                var isVisible = (visionData.ReadValue(i) & activePlayer) == activePlayer;
+                var wasVisible = (previousVisionData.ReadValue(i) & activePlayer) == activePlayer;
+
                 if (isVisible)
                 {
                     newColor = _whiteColor;
-                } else if (_previousVision && _visionMatrix.WasVisible(_activePlayers, i))
+                } else if (_previousVision && wasVisible)
                 {
                     newColor = _greyColor;
                 } 
@@ -129,17 +92,9 @@ namespace Gemserk.Vision
                 if (interpolationEnabled)
                 {
                     newColor.r = Mathf.LerpUnclamped(_colors[i].r, newColor.r, alpha);
-                } 
-    
-//                if (x - noise >= _tilesBlocked.x && y - noise >= _tilesBlocked.y 
-//                                                 && x + noise < width - _tilesBlocked.x && y + noise < height - _tilesBlocked.y)
-//                {
-//
-//                }
-            
-                _colors[i] = newColor;
+                }
 
-//                noise = (noise + 1) % 3;
+                _colors[i] = newColor;
             }
         
             _texture.SetPixels(_colors);

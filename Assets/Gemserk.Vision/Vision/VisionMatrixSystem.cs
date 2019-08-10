@@ -1,4 +1,5 @@
 ﻿using System;
+using Gemserk.DataGrids;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -19,7 +20,13 @@ namespace Gemserk.Vision
         [SerializeField]
         protected VisionCamera _visionCamera;
 	
-        private VisionMatrix _visionMatrix;
+        private GridData _visionData;
+
+        private GridData _temporaryVisibleData;
+
+        private GridData _previousVisionData;
+        
+        private GridData _groundData;
 
         private Vector2 _localScale;
 
@@ -43,8 +50,10 @@ namespace Gemserk.Vision
 	   
             _visionTexture.Create(width, height, _localScale);
             
-            _visionMatrix = new VisionMatrix();
-            _visionMatrix.Init(width, height, 0, 0);
+            _visionData = new GridData(width, height, 0);
+            _temporaryVisibleData = new GridData(width, height, 0);
+            _previousVisionData = new GridData(width, height, 0);
+            _groundData = new GridData(width, height, 0);
 
             cachedAbsoluteValues.Init(Math.Max(width, height));
         }
@@ -75,7 +84,7 @@ namespace Gemserk.Vision
             return new Vector2(x, y);
         }
 
-        private bool IsBlocked(VisionMatrix visionMatrix, short groundLevel, int x0, int y0, int x1, int y1)
+        private bool IsBlocked(int groundLevel, int x0, int y0, int x1, int y1)
         {
             Profiler.BeginSample("IsBlocked");
 
@@ -90,18 +99,20 @@ namespace Gemserk.Vision
 
             var blocked = false;
 
-            var width = visionMatrix.width;
+            var width = _visionData.width;
 		
             for (;;)
             {
                 // Tests if current pixel is already visible by current vision,
                 // that means the line to the center is clear.
-                if (_cacheVisible && visionMatrix.temporaryVisible[x0 + y0 * width] == 2)
+                if (_cacheVisible && _temporaryVisibleData.ReadValue(x0, y0) == 2)
                 {
                     break;
                 }
 
-                var ground = visionMatrix.ground[x0 + y0 * width];
+                var ground = _groundData.ReadValue(x0, y0);
+                
+//                var ground = visionMatrix.ground[x0 + y0 * width];
 
                 if (ground > groundLevel)
                 {
@@ -131,7 +142,7 @@ namespace Gemserk.Vision
             return blocked;
         }
         
-        private bool IsLineOfSightBlocked(VisionMatrix visionMatrix, int playerFlags, short groundLevel, int x0, int y0, int x1, int y1)
+        private bool IsLineOfSightBlocked(int playerFlags, short groundLevel, int x0, int y0, int x1, int y1)
         {
             if (!raycastEnabled)
                 return false;
@@ -149,13 +160,13 @@ namespace Gemserk.Vision
 
             var blocked = false;
 
-            var width = visionMatrix.width;
+            var width = _visionData.width;
             
             var maxLevel = -1;
             
             for (;;)
             {
-                var ground = visionMatrix.ground[x0 + y0 * width];
+                var ground = _groundData.ReadValue(x0, y0);
                 
                 if (ground < maxLevel)
                 {
@@ -167,7 +178,7 @@ namespace Gemserk.Vision
                     maxLevel = Mathf.Max(maxLevel, ground);
                 }
 
-                var players = visionMatrix.values[x0 + y0 * width];
+                var players = _visionData.ReadValue(x0, y0);
                 
                 if ((players & playerFlags) == 0)
                 {
@@ -197,9 +208,9 @@ namespace Gemserk.Vision
             return blocked;
         }
 	
-        private void DrawPixel(VisionMatrix visionMatrix, int player, int x0, int y0, int x, int y, short groundLevel)
+        private void DrawPixel(int player, int x0, int y0, int x, int y, short groundLevel)
         {
-            if (!visionMatrix.IsInside(x, y))
+            if (!_visionData.IsInside(x, y))
                 return;
 
             var blocked = false;
@@ -211,13 +222,16 @@ namespace Gemserk.Vision
             if (raycastEnabled)
             {
                 // Avoid recalculating this pixel blocked if was already visible by another vision of the same player 
-                if (!_recalculatePreviousVisible && visionMatrix.IsVisible(player, x, y))
+                if (!_recalculatePreviousVisible && _visionData.IsValue(player, x, y))
                     return;
 			
                 if (_cacheVisible)
-                    visionMatrix.temporaryVisible[x + y * visionMatrix.width] = 1;
+                {
+                    _temporaryVisibleData.StoreValue(1, x, y);
+//                    visionMatrix.temporaryVisible[x + y * visionMatrix.width] = 1;
+                }
 			
-                blocked = IsBlocked(visionMatrix, groundLevel, x, y, x0, y0);
+                blocked = IsBlocked(groundLevel, x, y, x0, y0);
             }
 		
             if (blocked)
@@ -226,16 +240,24 @@ namespace Gemserk.Vision
             } 
 		
             if (raycastEnabled && _cacheVisible)
-                visionMatrix.temporaryVisible[x + y * visionMatrix.width] = 2;
+            {
+                _temporaryVisibleData.StoreValue(2, x, y);
+//                visionMatrix.temporaryVisible[x + y * visionMatrix.width] = 2;
+            }
 		
-            visionMatrix.SetVisible(player, x, y);
+            _visionData.StoreFlagValue(player, x, y);
+            _previousVisionData.StoreFlagValue(player, x, y);
+//            visionMatrix.SetVisible(player, x, y);
         }
 
         private void UpdateVision(VisionPosition mp, float visionRange, int player, short groundLevel)
         {
             // clear local cache
             if (raycastEnabled && _cacheVisible)
-                Array.Clear(_visionMatrix.temporaryVisible, 0, _visionMatrix.temporaryVisible.Length);
+            {
+                _temporaryVisibleData.Clear();
+//                Array.Clear(_visionData.temporaryVisible, 0, _visionData.temporaryVisible.Length);
+            }
 		
             if (!updateMethod)
             {
@@ -267,13 +289,13 @@ namespace Gemserk.Vision
             {
                 for (var i = x0 - x; i <= x0 + x; i++)
                 {
-                    DrawPixel(_visionMatrix, player, x0, y0, i, y0 + y, groundLevel);
-                    DrawPixel(_visionMatrix, player, x0, y0, i, y0 - y, groundLevel);
+                    DrawPixel( player, x0, y0, i, y0 + y, groundLevel);
+                    DrawPixel( player, x0, y0, i, y0 - y, groundLevel);
                 }
                 for (var i = x0 - y; i <= x0 + y; i++)
                 {
-                    DrawPixel(_visionMatrix, player, x0, y0, i, y0 + x, groundLevel);
-                    DrawPixel(_visionMatrix, player, x0, y0, i, y0 - x, groundLevel);
+                    DrawPixel( player, x0, y0, i, y0 + x, groundLevel);
+                    DrawPixel( player, x0, y0, i, y0 - x, groundLevel);
                 }
 
                 y++;
@@ -327,11 +349,13 @@ namespace Gemserk.Vision
                     {
                         if (diff.sqrMagnitude < rangeSqr)
                         {
-                            var blocked = raycastEnabled && IsBlocked(_visionMatrix, groundLevel, mx, my, mp.x, mp.y);
+                            var blocked = raycastEnabled && IsBlocked( groundLevel, mx, my, mp.x, mp.y);
 						
                             if (!blocked)
                             {
-                                _visionMatrix.SetVisible(player, mx, my);
+                                _visionData.StoreFlagValue(player, mx, my);
+                                _previousVisionData.StoreFlagValue(player, mx, my);
+//                                _visionData.SetVisible(player, mx, my);
                             }
                         }
                     }
@@ -374,12 +398,13 @@ namespace Gemserk.Vision
 
         public void Clear()
         {
-            _visionMatrix.Clear();
+            _visionData.Clear();
+            _previousVisionData.Clear();
         }
 
         public void ClearVision()
         {
-            _visionMatrix.ClearValues();
+            _visionData.Clear();
         }
         
         public void UpdateVision(VisionData vision)
@@ -390,30 +415,31 @@ namespace Gemserk.Vision
 
         public void UpdateTextures()
         {
-            _visionTexture.UpdateTexture(_visionMatrix, _activePlayers);
+            _visionTexture.UpdateTexture(_visionData, _previousVisionData, _activePlayers);
         }
 
         public void RegisterObstacle(VisionObstacle obstacle)
         {
             for (var i = 0; i < width; i++)
             {
-                for (var k = 0; k < height; k++)
+                for (var j = 0; j < height; j++)
                 {
-                    var p = GetWorldPosition(i, k);
-                    var currentLevel = _visionMatrix.GetGround(i, k);
+                    var p = GetWorldPosition(i, j);
+                    var currentLevel = _groundData.ReadValue(i, j);
 					
                     if (currentLevel < obstacle.GetGroundLevel(p))
                         currentLevel = obstacle.GetGroundLevel(p);
 
-                    _visionMatrix.SetGround(i, k, currentLevel);
+                    _groundData.StoreValue(i, j, currentLevel);
                 }
             }		
         }
 	
-        public short GetGroundLevel(Vector3 position)
+        public int GetGroundLevel(Vector3 position)
         {
             var mp = GetMatrixPosition(position);
-            return _visionMatrix.GetGround(mp.x, mp.y);
+            return _groundData.ReadValue(mp.x, mp.y);
+//            return _visionMatrix.GetGround(mp.x, mp.y);
         }
 
 
@@ -422,22 +448,22 @@ namespace Gemserk.Vision
             var m0 = GetMatrixPosition(p0);
             var m1 = GetMatrixPosition(p1);
 
-            return IsLineOfSightBlocked(_visionMatrix, playerFlags, groundLevel, m0.x, m0.y, m1.x, m1.y);
+            return IsLineOfSightBlocked(playerFlags, groundLevel, m0.x, m0.y, m1.x, m1.y);
         }
 
         public bool IsVisible(int playerFlags, Vector2 position)
         {
             var m0 = GetMatrixPosition(position);
-            var visible = _visionMatrix.IsVisible(playerFlags, m0.x, m0.y);
+            var visible = _visionData.IsValue(playerFlags, m0.x, m0.y);
             return visible;
         }
 
         public int GetPlayersVision(Vector3 worldPosition)
         {
             var p = GetMatrixPosition(worldPosition);
-            if (!_visionMatrix.IsInside(p.x, p.y))
+            if (!_visionData.IsInside(p.x, p.y))
                 return 0;
-            return _visionMatrix.GetValue(p.x, p.y);
+            return _visionData.ReadValue(p.x, p.y);
         }
     }
 }
