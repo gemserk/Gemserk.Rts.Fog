@@ -10,7 +10,7 @@ public class MoveWithTouch : MonoBehaviour
 	protected Vision _vision;
 
 	[SerializeField]
-	protected VisionSystem _visionSystem;
+	protected VisionMatrixSystem _visionSystem;
 
 	public bool moveEnabled = true;
 

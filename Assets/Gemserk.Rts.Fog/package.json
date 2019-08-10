@@ -1,9 +1,0 @@
-{
-    "name": "com.gemserk.rts.fog",
-    "displayName": "Gemserk Rts Fog",
-    "version": "0.0.1-preview",
-    "unity": "2018.1",
-    "description": "Fog of war logic for RTS games.",
-    "keywords": [ "package", "unity", "rts" ],
-    "dependencies": {}
-  }

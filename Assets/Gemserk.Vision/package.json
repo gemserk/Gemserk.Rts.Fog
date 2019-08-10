@@ -1,0 +1,8 @@
+{
+	"name": "com.gemserk.rts.vision",
+	"displayName": "Gemserk Vision System",
+	"version": "0.0.3",
+	"unity": "2018.1",
+	"description": "A Fog of War implementation for RTS games",
+	"dependencies": {}
+}

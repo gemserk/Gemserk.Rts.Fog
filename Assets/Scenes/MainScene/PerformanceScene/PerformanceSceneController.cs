@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Linq;
 using Gemserk.Vision;
 using UnityEngine;
 
@@ -13,9 +14,11 @@ public class PerformanceSceneController : MonoBehaviour
 	public float minVision;
 	public float maxVision;
 
+	public int totalPlayers = 4;
+
 	public Transform unitsParent;
 
-	private VisionSystem _visionSystem;
+	private VisionMatrixSystem _visionSystem;
 
 	private int _currentPlayerIndex;
 
@@ -48,7 +51,8 @@ public class PerformanceSceneController : MonoBehaviour
 	// Use this for initialization
 	private void Start ()
 	{
-		_visionSystem = FindObjectOfType<VisionSystem>();
+		_visionSystem = FindObjectOfType<VisionMatrixSystem>();
+		_visionSystem.Init();
 		
 		Application.targetFrameRate = 60;
 		SpawnUnits(unitsCount);
@@ -175,12 +179,38 @@ public class PerformanceSceneController : MonoBehaviour
 				label.UpdateText(string.Format("units: {0}", unitsParent.childCount));
 			});
 		}
+
+		StartCoroutine(UpdateVision());
+	}
+
+	private IEnumerator UpdateVision()
+	{
+		while (true)
+		{
+			_visionSystem.ClearVision();
+
+			var visions = FindObjectsOfType<Vision>();
+			visions.ToList().ForEach(v =>
+			{
+				_visionSystem.UpdateVision(new VisionData
+				{
+					position = v.transform.position,
+					player =  v.player,
+					groundLevel = (short) v.groundLevel,
+					range = v.range
+				});
+			});
+			// update for all visions
+			
+			_visionSystem.UpdateTextures();
+			yield return new WaitForFixedUpdate();
+		}
 	}
 
 	public void SpawnUnits(int count)
 	{
 		var waypoints = FindObjectsOfType<Waypoint>();
-		var visionSystem = FindObjectOfType<VisionSystem>();
+		var visionSystem = FindObjectOfType<VisionMatrixSystem>();
 		
 		for (var i = 0; i < count; i++)
 		{
@@ -192,7 +222,7 @@ public class PerformanceSceneController : MonoBehaviour
 			var waypointMovement = unitObject.GetComponentInChildren<WaypointMovement>();
 			waypointMovement.SetWaypoint(waypoints[UnityEngine.Random.Range(0, waypoints.Length)]);
 
-			var randomPlayer = UnityEngine.Random.Range(0, visionSystem.totalPlayers);
+			var randomPlayer = UnityEngine.Random.Range(0, totalPlayers);
 			
 			var vision = unitObject.GetComponentInChildren<Vision>();
 			vision.player = 1 << randomPlayer;
