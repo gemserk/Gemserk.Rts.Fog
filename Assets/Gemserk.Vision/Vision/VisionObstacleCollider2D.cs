@@ -7,7 +7,7 @@ namespace Gemserk.Vision
         [SerializeField]
         protected Collider2D _collider;
 
-        public override short GetGroundLevel(Vector2 worldPosition)
+        public override int GetGroundLevel(Vector2 worldPosition)
         {
             if (_collider.OverlapPoint(worldPosition))
                 return groundLevel;

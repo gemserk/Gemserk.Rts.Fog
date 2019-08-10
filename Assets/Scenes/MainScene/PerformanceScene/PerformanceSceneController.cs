@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Linq;
+using Gemserk.DataGrids;
 using Gemserk.Vision;
 using UnityEngine;
+
 
 public class PerformanceSceneController : MonoBehaviour
 {
@@ -32,7 +34,7 @@ public class PerformanceSceneController : MonoBehaviour
 
 	[SerializeField]
 	protected VisionTerrainTexture _visionTerrain;
-	
+
 	[SerializeField]
 	protected string _fogLayerName = "Fog";
 	
@@ -53,6 +55,13 @@ public class PerformanceSceneController : MonoBehaviour
 	{
 		_visionSystem = FindObjectOfType<VisionMatrixSystem>();
 		_visionSystem.Init();
+		
+		var obstacleCreation = FindObjectOfType<VisionObstacleCreationSystem>();
+		if (obstacleCreation != null)
+		{
+			obstacleCreation.VisionMatrixSystem = _visionSystem;
+		}
+
 		
 		Application.targetFrameRate = 60;
 		SpawnUnits(unitsCount);
@@ -180,6 +189,7 @@ public class PerformanceSceneController : MonoBehaviour
 			});
 		}
 
+
 		StartCoroutine(UpdateVision());
 	}
 
@@ -192,6 +202,7 @@ public class PerformanceSceneController : MonoBehaviour
 			var visions = FindObjectsOfType<Vision>();
 			visions.ToList().ForEach(v =>
 			{
+				v.groundLevel = _visionSystem.GetGroundLevel(v.transform.position);
 				_visionSystem.UpdateVision(new VisionData
 				{
 					position = v.transform.position,

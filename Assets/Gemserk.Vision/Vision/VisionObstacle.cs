@@ -4,8 +4,8 @@ namespace Gemserk.Vision
 {
     public abstract class VisionObstacle : MonoBehaviour
     {
-        public short groundLevel;
-        public abstract short GetGroundLevel(Vector2 worldPosition);
+        public int groundLevel;
+        public abstract int GetGroundLevel(Vector2 worldPosition);
 
         private VisionObstacleCreationSystem _visionObstacleCreationSystem;
 
@@ -14,7 +14,7 @@ namespace Gemserk.Vision
         
         private void OnValidate()
         {
-            name = string.Format("{0}(height:{1})", obstacleName, groundLevel);
+            name = $"{obstacleName}(height:{groundLevel})";
         }
 #endif
         
