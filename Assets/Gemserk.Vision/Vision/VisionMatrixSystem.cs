@@ -228,7 +228,6 @@ namespace Gemserk.Vision
                 if (_cacheVisible)
                 {
                     _temporaryVisibleData.StoreValue(1, x, y);
-//                    visionMatrix.temporaryVisible[x + y * visionMatrix.width] = 1;
                 }
 			
                 blocked = IsBlocked(groundLevel, x, y, x0, y0);
@@ -242,12 +241,10 @@ namespace Gemserk.Vision
             if (raycastEnabled && _cacheVisible)
             {
                 _temporaryVisibleData.StoreValue(2, x, y);
-//                visionMatrix.temporaryVisible[x + y * visionMatrix.width] = 2;
             }
 		
             _visionData.StoreFlagValue(player, x, y);
             _previousVisionData.StoreFlagValue(player, x, y);
-//            visionMatrix.SetVisible(player, x, y);
         }
 
         private void UpdateVision(VisionPosition mp, float visionRange, int player, short groundLevel)
@@ -256,7 +253,6 @@ namespace Gemserk.Vision
             if (raycastEnabled && _cacheVisible)
             {
                 _temporaryVisibleData.Clear();
-//                Array.Clear(_visionData.temporaryVisible, 0, _visionData.temporaryVisible.Length);
             }
 		
             if (!updateMethod)
@@ -355,7 +351,6 @@ namespace Gemserk.Vision
                             {
                                 _visionData.StoreFlagValue(player, mx, my);
                                 _previousVisionData.StoreFlagValue(player, mx, my);
-//                                _visionData.SetVisible(player, mx, my);
                             }
                         }
                     }
