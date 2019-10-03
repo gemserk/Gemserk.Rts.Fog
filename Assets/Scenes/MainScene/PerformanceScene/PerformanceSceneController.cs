@@ -189,19 +189,15 @@ public class PerformanceSceneController : MonoBehaviour
 			_visionSystem.ClearVision();
 
 			var visions = FindObjectsOfType<Vision>();
-			visions.ToList().ForEach(v =>
-			{
-				v.groundLevel = _visionSystem.GetGroundLevel(v.transform.position);
-				_visionSystem.UpdateVision(new VisionData
-				{
-					position = v.transform.position,
-					player =  v.player,
-					groundLevel = (short) v.groundLevel,
-					range = v.range
-				});
-			});
-			// update for all visions
 			
+			_visionSystem.UpdateVisions(visions.Select(v => new VisionData()
+			{
+				position = v.transform.position,
+				player =  v.player,
+				groundLevel = v.groundLevel,
+				range = v.range
+			}).ToList());
+
 			_visionSystem.UpdateTextures();
 			yield return new WaitForFixedUpdate();
 		}

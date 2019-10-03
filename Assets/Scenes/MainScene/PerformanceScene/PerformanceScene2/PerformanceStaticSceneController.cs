@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Gemserk.Vision;
 using UnityEngine;
 
@@ -65,23 +66,40 @@ public class PerformanceStaticSceneController : MonoBehaviour
         Application.targetFrameRate = 60;
     }
 
+    private List<VisionData> visionDatas = new List<VisionData>();
 
     private void FixedUpdate()
     {
         _visionSystem.ClearVision();
 
+        visionDatas.Clear();
+        
         for (var i = 0; i < _visions.Count; i++)
         {
             var v = _visions[i];
-            v.groundLevel = _visionSystem.GetGroundLevel(v.transform.position);
-            _visionSystem.UpdateVision(new VisionData
+            visionDatas.Add(new VisionData
             {
                 position = v.transform.position,
                 player = v.player,
-                groundLevel = (short) v.groundLevel,
+                groundLevel = v.groundLevel,
                 range = v.range
             });
         }
+        
+        _visionSystem.UpdateVisions(visionDatas);
+
+//        for (var i = 0; i < _visions.Count; i++)
+//        {
+//            var v = _visions[i];
+//            v.groundLevel = _visionSystem.GetGroundLevel(v.transform.position);
+//            _visionSystem.UpdateVision(new VisionData
+//            {
+//                position = v.transform.position,
+//                player = v.player,
+//                groundLevel = v.groundLevel,
+//                range = v.range
+//            });
+//        }
         // update for all visions
     }
 

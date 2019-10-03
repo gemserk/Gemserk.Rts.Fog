@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Gemserk.DataGrids;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 namespace Gemserk.Vision
 {
@@ -195,7 +195,7 @@ namespace Gemserk.Vision
             return blocked;
         }
 	
-        private void DrawPixel(int player, int x0, int y0, int x, int y, short groundLevel)
+        private void DrawPixel(int player, int x0, int y0, int x, int y, int groundLevel)
         {
             if (!visionData.IsInside(x, y))
                 return;
@@ -234,7 +234,7 @@ namespace Gemserk.Vision
             previousVisionData.StoreFlagValue(player, x, y);
         }
 
-        private void UpdateVision(VisionPosition mp, float visionRange, int player, short groundLevel)
+        private void UpdateVision(VisionPosition mp, float visionRange, int player, int groundLevel)
         {
             // clear local cache
             if (raycastEnabled && _cacheVisible)
@@ -293,11 +293,58 @@ namespace Gemserk.Vision
         {
             visionData.Clear();
         }
-        
-        public void UpdateVision(VisionData vision)
+
+        public void UpdateVisions(List<VisionData> visions)
         {
-            var matrixPosition = GetMatrixPosition(vision.position);
-            UpdateVision(matrixPosition, vision.range, vision.player, vision.groundLevel);
+            for (var j = 0; j < visions.Count; j++)
+            {
+                var vision = visions[j];
+                var mp = GetMatrixPosition(vision.position);
+                
+                if (raycastEnabled && _cacheVisible)
+                {
+                    temporaryVisibleData.Clear();
+                }
+		
+                var radius = Mathf.FloorToInt(vision.range / _localScale.x) - 1;
+
+                if (radius <= 0)
+                    return;
+            
+                var x0 = mp.x;
+                var y0 = mp.y;
+		
+                var x = radius;
+                var y = 0;
+                var xChange = 1 - (radius << 1);
+                var yChange = 0;
+                var radiusError = 0;
+		
+                while (x >= y)
+                {
+                    for (var i = x0 - x; i <= x0 + x; i++)
+                    {
+                        DrawPixel(vision.player, x0, y0, i, y0 + y, vision.groundLevel);
+                        DrawPixel(vision.player, x0, y0, i, y0 - y, vision.groundLevel);
+                    }
+                    for (var i = x0 - y; i <= x0 + y; i++)
+                    {
+                        DrawPixel(vision.player, x0, y0, i, y0 + x, vision.groundLevel);
+                        DrawPixel(vision.player, x0, y0, i, y0 - x, vision.groundLevel);
+                    }
+
+                    y++;
+                    radiusError += yChange;
+                    yChange += 2;
+			
+                    if (((radiusError << 1) + xChange) > 0)
+                    {
+                        x--;
+                        radiusError += xChange;
+                        xChange += 2;
+                    }
+                }
+            }
         }
 
         public void UpdateTextures()

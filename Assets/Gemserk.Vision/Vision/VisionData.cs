@@ -8,7 +8,7 @@ namespace Gemserk.Vision
     {
         public int player;
         public Vector2 position;
+        public int groundLevel;
         public float range;
-        public short groundLevel;
     }
 }
