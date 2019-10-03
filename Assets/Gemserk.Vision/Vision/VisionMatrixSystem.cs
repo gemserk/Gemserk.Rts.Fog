@@ -34,13 +34,7 @@ namespace Gemserk.Vision
         protected bool _cacheVisible = true;
 
         private static CachedIntAbsoluteValues cachedAbsoluteValues;
-
-        [SerializeField]
-        public bool updateMethod;
-
-        [SerializeField]
-        public bool _recalculatePreviousVisible = true;
-	
+        
         public void Init()
         {
             _localScale = _visionCamera.GetScale(width, height);
@@ -83,7 +77,7 @@ namespace Gemserk.Vision
 
         private bool IsBlocked(int groundLevel, int x0, int y0, int x1, int y1)
         {
-            Profiler.BeginSample("IsBlocked");
+            // Profiler.BeginSample("IsBlocked");
 
             var dx = cachedAbsoluteValues.Abs(x1 - x0);
             var dy = cachedAbsoluteValues.Abs(y1 - y0);
@@ -133,7 +127,7 @@ namespace Gemserk.Vision
                 y0 += sy;
             }
 
-            Profiler.EndSample();
+            // Profiler.EndSample();
             return blocked;
         }
         
@@ -142,7 +136,7 @@ namespace Gemserk.Vision
             if (!raycastEnabled)
                 return false;
                     
-            Profiler.BeginSample("CheckLineOfSight");
+            // Profiler.BeginSample("CheckLineOfSight");
 
             var dx = cachedAbsoluteValues.Abs(x1 - x0);
             var dy = cachedAbsoluteValues.Abs(y1 - y0);
@@ -197,7 +191,7 @@ namespace Gemserk.Vision
                 y0 += sy;
             }
 
-            Profiler.EndSample();
+            // Profiler.EndSample();
             return blocked;
         }
 	
@@ -214,8 +208,8 @@ namespace Gemserk.Vision
 
             if (raycastEnabled)
             {
-                // Avoid recalculating this pixel blocked if was already visible by another vision of the same player 
-                if (!_recalculatePreviousVisible && visionData.IsValue(player, x, y))
+                // Avoid recalculating this pixel blocked if was already visible by the player 
+                if (visionData.IsValue(player, x, y))
                     return;
 			
                 if (_cacheVisible)
@@ -248,18 +242,6 @@ namespace Gemserk.Vision
                 temporaryVisibleData.Clear();
             }
 		
-            if (!updateMethod)
-            {
-                UpdateVision1(mp, visionRange, player, groundLevel);
-            }
-            else
-            {
-                UpdateVision2(mp, visionRange, player, groundLevel);
-            }
-        }
-
-        private void UpdateVision2(VisionPosition mp, float visionRange, int player, short groundLevel)
-        {
             int radius = Mathf.FloorToInt(visionRange / _localScale.x) - 1;
 
             if (radius <= 0)
@@ -298,90 +280,7 @@ namespace Gemserk.Vision
                     xChange += 2;
                 }
             }
-		
-        }
 
-        private void UpdateVision1(VisionPosition mp, float visionRange, int player, short groundLevel)
-        {
-            var visionPosition = GetWorldPosition(mp.x, mp.y);
-		
-            var currentRowSize = 0;
-            var currentColSize = 0;
-		
-            var rangeSqr = visionRange * visionRange;
-		
-            var visionWidth = Mathf.RoundToInt(visionRange / _localScale.x);
-            var visionHeight = Mathf.RoundToInt(visionRange / _localScale.y);
-
-            var maxColSize = visionWidth;
-            var maxRowSize = visionHeight;
-
-            while (currentRowSize != maxRowSize && currentColSize != maxColSize)
-            {
-                var x = -currentColSize;
-                var y = -currentRowSize;
-			
-                var dx = 1;
-                var dy = 0;
-
-                while (true)
-                {
-                    // check current
-                    var mx = mp.x + x;
-                    var my = mp.y + y;
-				
-                    var p = GetWorldPosition(mx, my);
-				
-                    var diff = p - visionPosition;
-				
-                    if (mx >= 0 && mx < width && my >= 0 && my < height)
-                    {
-                        if (diff.sqrMagnitude < rangeSqr)
-                        {
-                            var blocked = raycastEnabled && IsBlocked( groundLevel, mx, my, mp.x, mp.y);
-						
-                            if (!blocked)
-                            {
-                                visionData.StoreFlagValue(player, mx, my);
-                                previousVisionData.StoreFlagValue(player, mx, my);
-                            }
-                        }
-                    }
-
-                    if (x + dx > currentColSize)
-                    {
-                        dx = 0;
-                        dy = 1;
-                    }
-
-                    if (y + dy > currentRowSize)
-                    {
-                        dx = -1;
-                        dy = 0;
-                    }
-
-                    if (x + dx < -currentColSize)
-                    {
-                        dx = 0;
-                        dy = -1;
-                    }
-
-                    if (y + dy < -currentRowSize)
-                    {
-                        // completed the cycle
-                        break;
-                    }
-				
-                    x += dx;
-                    y += dy;
-                }
-			
-                if (currentRowSize < maxRowSize)
-                    currentRowSize++;
-			
-                if (currentColSize < maxColSize)
-                    currentColSize++;
-            }
         }
 
         public void Clear()

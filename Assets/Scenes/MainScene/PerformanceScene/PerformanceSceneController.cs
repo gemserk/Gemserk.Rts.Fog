@@ -120,18 +120,7 @@ public class PerformanceSceneController : MonoBehaviour
 					}
 				});
 			}
-			
-			if (_visionSystem != null)
-			{
-				var b = debugPanelScript.AddButton("update method", button =>
-				{
-					_visionSystem.updateMethod = !_visionSystem.updateMethod;
-					button.UpdateText(string.Format("method: {0}", _visionSystem.updateMethod ? "1" : "2"));
-				}, null);
-				
-				b.UpdateText(string.Format("method: {0}", _visionSystem.updateMethod ? "1" : "2"));
-			}
-			
+
 			if (_visionSystem != null)
 			{
 				var b = debugPanelScript.AddButton("raycast", button =>

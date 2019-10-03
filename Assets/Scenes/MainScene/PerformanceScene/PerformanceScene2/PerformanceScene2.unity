@@ -850,7 +850,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spawnBounds: {fileID: 509982879}
-  unitsCount: 150
+  unitsCount: 250
   unitPrefab: {fileID: 1216008585793352, guid: 8800a96915a43d245baacaf223059107, type: 3}
   totalPlayers: 8
   unitsParent: {fileID: 361997208}
