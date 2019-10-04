@@ -4,9 +4,9 @@ namespace Gemserk.Vision
 {
     public struct CachedIntAbsoluteValues
     {
-        private int width;
+        public int width;
 
-        private int[] cache;
+        public int[] cache;
 
         public void Init(int width)
         {

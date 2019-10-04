@@ -77,10 +77,12 @@ namespace Gemserk.Vision
 
         private bool IsBlocked(int groundLevel, int x0, int y0, int x1, int y1)
         {
-            // Profiler.BeginSample("IsBlocked");
+            // UnityEngine.Profiling.Profiler.BeginSample("IsBlocked");
 
-            var dx = cachedAbsoluteValues.Abs(x1 - x0);
-            var dy = cachedAbsoluteValues.Abs(y1 - y0);
+            var dx = cachedAbsoluteValues.cache[x1 - x0 + cachedAbsoluteValues.width];
+            var dy = cachedAbsoluteValues.cache[y1 - y0 + cachedAbsoluteValues.width];
+            
+//            var dy = cachedAbsoluteValues.Abs(y1 - y0);
 		
             var sx = x0 < x1 ? 1 : -1;
             var sy = y0 < y1 ? 1 : -1;
@@ -94,13 +96,17 @@ namespace Gemserk.Vision
             {
                 // Tests if current pixel is already visible by current vision,
                 // that means the line to the center is clear.
-                if (_cacheVisible && temporaryVisibleData.ReadValue(x0, y0) == 2)
+//                var tmp = temporaryVisibleData.ReadValue(x0, y0);
+
+                var tmp = temporaryVisibleData.values[x0 + y0 * temporaryVisibleData.width];
+                if (_cacheVisible && tmp == 2)
                 {
                     break;
                 }
 
-                var ground = groundData.ReadValue(x0, y0);
+                var ground = groundData.values[x0 + y0 * groundData.width];
                 
+//                var ground = groundData.ReadValue(x0, y0);
 //                var ground = visionMatrix.ground[x0 + y0 * width];
 
                 if (ground > groundLevel)
@@ -127,7 +133,8 @@ namespace Gemserk.Vision
                 y0 += sy;
             }
 
-            // Profiler.EndSample();
+//            UnityEngine.Profiling.Profiler.EndSample();
+            
             return blocked;
         }
         
@@ -208,8 +215,12 @@ namespace Gemserk.Vision
 
             if (raycastEnabled)
             {
+                // return (values[i + j * width] & value) > 0;
+
+                var isValue = (visionData.values[x + y * visionData.height] & player) > 0;
+                
                 // Avoid recalculating this pixel blocked if was already visible by the player 
-                if (visionData.IsValue(player, x, y))
+                if (isValue)
                     return;
 			
                 if (_cacheVisible)
@@ -230,58 +241,61 @@ namespace Gemserk.Vision
                 temporaryVisibleData.StoreValue(2, x, y);
             }
 		
-            visionData.StoreFlagValue(player, x, y);
-            previousVisionData.StoreFlagValue(player, x, y);
-        }
-
-        private void UpdateVision(VisionPosition mp, float visionRange, int player, int groundLevel)
-        {
-            // clear local cache
-            if (raycastEnabled && _cacheVisible)
-            {
-                temporaryVisibleData.Clear();
-            }
-		
-            int radius = Mathf.FloorToInt(visionRange / _localScale.x) - 1;
-
-            if (radius <= 0)
-                return;
+            visionData.values[x + y * visionData.width] |= player;
+            previousVisionData.values[x + y * previousVisionData.width] |= player;
             
-            int x0 = mp.x;
-            int y0 = mp.y;
-		
-            int x = radius;
-            int y = 0;
-            int xChange = 1 - (radius << 1);
-            int yChange = 0;
-            int radiusError = 0;
-		
-            while (x >= y)
-            {
-                for (var i = x0 - x; i <= x0 + x; i++)
-                {
-                    DrawPixel( player, x0, y0, i, y0 + y, groundLevel);
-                    DrawPixel( player, x0, y0, i, y0 - y, groundLevel);
-                }
-                for (var i = x0 - y; i <= x0 + y; i++)
-                {
-                    DrawPixel( player, x0, y0, i, y0 + x, groundLevel);
-                    DrawPixel( player, x0, y0, i, y0 - x, groundLevel);
-                }
-
-                y++;
-                radiusError += yChange;
-                yChange += 2;
-			
-                if (((radiusError << 1) + xChange) > 0)
-                {
-                    x--;
-                    radiusError += xChange;
-                    xChange += 2;
-                }
-            }
-
+//            visionData.StoreFlagValue(player, x, y);
+//            previousVisionData.StoreFlagValue(player, x, y);
         }
+
+//        private void UpdateVision(VisionPosition mp, float visionRange, int player, int groundLevel)
+//        {
+//            // clear local cache
+//            if (raycastEnabled && _cacheVisible)
+//            {
+//                temporaryVisibleData.Clear();
+//            }
+//		
+//            int radius = Mathf.FloorToInt(visionRange / _localScale.x) - 1;
+//
+//            if (radius <= 0)
+//                return;
+//            
+//            int x0 = mp.x;
+//            int y0 = mp.y;
+//		
+//            int x = radius;
+//            int y = 0;
+//            int xChange = 1 - (radius << 1);
+//            int yChange = 0;
+//            int radiusError = 0;
+//		
+//            while (x >= y)
+//            {
+//                for (var i = x0 - x; i <= x0 + x; i++)
+//                {
+//                    DrawPixel( player, x0, y0, i, y0 + y, groundLevel);
+//                    DrawPixel( player, x0, y0, i, y0 - y, groundLevel);
+//                }
+//                for (var i = x0 - y; i <= x0 + y; i++)
+//                {
+//                    DrawPixel( player, x0, y0, i, y0 + x, groundLevel);
+//                    DrawPixel( player, x0, y0, i, y0 - x, groundLevel);
+//                }
+//
+//                y++;
+//                radiusError += yChange;
+//                yChange += 2;
+//			
+//                if (((radiusError << 1) + xChange) > 0)
+//                {
+//                    x--;
+//                    radiusError += xChange;
+//                    xChange += 2;
+//                }
+//            }
+//
+//        }
 
         public void Clear()
         {
